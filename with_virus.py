@@ -574,7 +574,7 @@ if __name__ == "__main__":
     # 距離減衰のパラメータとランドマークの数を設定
     lbd = float(sys.argv[6])  # 距離減衰係数：0.05, 0.1, 0.5, 1.0, 5.0
     landmark_num = int(sys.argv[7])-2  # 選択するランドマークの数：100, 200
-    pop_length = int(sys.argv[8])-2  # 染色体長：20, 40, 60
+    pop_length = int(sys.argv[8])-2  # 染色体長：10, 20, 30, 40, 50
     alpha, beta = 2, 5  # beta関数のパラメータ
 
     # クラスタリングのパラメータを設定

@@ -1,7 +1,41 @@
 # APNS2025 for Aohr
 
 
-## プログラム説明
+## GAプログラム説明
+* gen_roadNW.py：対象地域の道路網を取得する
+  * 第1引数（city）：対象都市名（例：hachioji, yokohama）
+  * 第2引数（pref）：都道府県名
+  * 出力ファイル
+    * road_network.graphml
+    * nodes.csv
+* gen_landmark.py：始点と終点からの距離確率に基づきランドマークを選択する
+  * 第1引数（city）：対象都市名
+  * 第2引数（frmt）：出発点・到着点の緯度経度が書かれたファイル（例：from-to_01.txt）
+  * 第3引数（lbd1）：距離減衰係数lbd1（例：0.05, 0.10, 0.50, 1.00, 5.00）
+  * 第4引数（landmark_num）：選択するランドマークの数（例：100, 200）
+  * 出力ファイル
+    * landmark_dtf_frmt{frmt:02d}_L{landmark_num:03d}_{int(lbd1*100):03d}.csv
+    * nodes_frmt{frmt:02d}.csv
+* gen_virus.py：スポットウイルスを選択する
+  * 第1引数（city）：対象都市名
+  * 第2引数（pref）：都道府県名
+  * 第3引数（virus）：ウイルス種類名（例：bank）
+  * 出力ファイル
+    * {virus}_spot_dtf.csv
+    * nodes_{virus}.csv
+* concat_landmark_virus.py：ウイルスノードの並び替え（出発地からの距離でソート）とランドマークノードからの重複除去
+  * 第1引数（city）：対象都市名
+  * 第2引数（frmt）：出発点・到着点の緯度経度が書かれたファイル
+  * 第3引数（virus）：ウイルス種類名
+  * 第4引数（lbd1）：距離減衰係数lbd1
+  * 第5引数（landmark_num）：選択するランドマークの数
+  * 出力ファイル
+    * virus_frmt{frmt:02d}_{virus}.csv
+    * landmark_frmt{frmt:02d}_L{landmark_num:03d}_{int(lbd1*100):03d}_{virus}.csv
+    * nodes_frmt{frmt:02d}_{virus}.csv
+* init_pop.py：初期個体生成
+  * 第1引数：
+  * 出力ファイル：
 * with_virus.py
   * 第1引数（city）：対象都市名（例：hachioji，yokohama）
   * 第2引数（frmt）：出発点・到着点の緯度経度が書かれたファイル番号（例：「from-to_01.txt」なら「1」）
@@ -18,3 +52,11 @@
   * 第13引数（mutation_prob）：突然変異確率（例：「0.1」なら「10」）
   * 並列BG実行例：`for alpha in 1.0 2.0 5.0 0.5 0.2 0.1; do for k in 1 5 10; do for pi in $(seq 0 0.1 1.0); do python with_virus.py hachioji 1 bank 100 50 1.0 100 20 ${k} ${pi} ${alpha} 50 10 ; done & done; done`
 * without_virus.py
+
+
+
+## 評価
+### 多様性評価：eval_diversity.ipynb
+* 
+### 最適性評価：eval_optimality.ipynb
+### 制約充足性評価：eval_satisfiability.ipynb

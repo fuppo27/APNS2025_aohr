@@ -120,7 +120,8 @@ if __name__ == "__main__":
     start_row = nodes2[nodes2["osmid"] == start_node]  # 始点ノードのデータ行を取得
     end_row = nodes2[nodes2["osmid"] == end_node]  # 終点ノードのデータ行を取得
     landmark_dtf = pd.concat([start_row, landmark_dtf, end_row]).reset_index(drop=True)  # 始点・終点のデータをdtfに追加
-    print(f"{len(landmark_dtf) = }")    
+    print(f"{len(landmark_dtf) = }")
+    landmark_dtf = spot_distance(landmark_dtf, spot_dtf)    
     vector = np.array([start[1] - end[1], end[0] - start[0]])  # 始点と終点のベクトルを計算
     landmark_xy = landmark_dtf[["y", "x"]].values.tolist()  # ランドマークの座標をリストに変換
     landmark_xy_np = np.array(landmark_xy)

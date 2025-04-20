@@ -203,7 +203,7 @@ def evaluate(pop_dtf, spot_dtf, shortest_length, evaluation_value_raito, weight,
     # 経路のノード情報をリストに変換
     pops_route_node = pop_dtf['route_node'].tolist()
     # 観光スポットの最寄りノードをリストに変換
-    nearest_node = spot_dtf["nerest_node"].tolist()
+    nearest_node = spot_dtf["nearest_node"].tolist()
 
     # 各経路の長さを最短経路の長さで割った比率を計算
     length_raito = [shortest_length / length for length in pops_length]
@@ -441,7 +441,7 @@ def viral_infection(landmark_dtf, spot_dtf, nodes, route_order, pop_length, viru
 
     Args:
         landmark_dtf (pandas.DataFrame): ランドマークのデータフレーム。少なくとも `osmid` と `spot_distance` 列が必要。
-        spot_dtf (pandas.DataFrame): スポットノードのデータフレーム。少なくとも `nerest_node` と `virus_nodes` 列が必要。
+        spot_dtf (pandas.DataFrame): スポットノードのデータフレーム。少なくとも `nearest_node` と `virus_nodes` 列が必要。
         nodes (pandas.DataFrame): ノードのデータフレーム。少なくとも `osmid` 列が必要。
         route_order (list): 現在の経路順序のリスト。
         pop_length (int): 経路の長さ（ランドマークの数）。
@@ -483,7 +483,7 @@ def viral_infection(landmark_dtf, spot_dtf, nodes, route_order, pop_length, viru
         probabilities = probabilities[spot_distance_min_idx]
 
         target_spot = spot_dtf.iloc[idx]  # ターゲットスポットを取得
-        target_spot_node = target_spot["nerest_node"]  # ターゲットノードID
+        target_spot_node = target_spot["nearest_node"]  # ターゲットノードID
         virus_nodes = target_spot["virus_nodes"]  # ウイルスノードリスト
 
         if probabilities >= immunity:
@@ -566,21 +566,17 @@ if __name__ == "__main__":
     frmt = int(sys.argv[2])  # 出発点・到着点の緯度経度が書かれたファイル：from-to_01.txt
     start, end = [tuple(eval(row.rstrip())) for row in open(f"data/{city}/from-to_{frmt:02d}.txt")]  # 出発点と到着点の緯度経度を設定
 
-    # 初期生成時のパラメータを設定
-    pop_num = int(sys.argv[4])  # 個体数（初期世代に含まれる経路の数）：100, 200
-    generation_num = int(sys.argv[5])  # 世代数（進化の回数）：50, 100
-    generation_counter = 0  # 世代カウンタ
+    # ランドマークと初期個体関連
+    lbd1 = float(sys.argv[3])  # 距離減衰係数lbd1：0.05, 0.1, 0.5, 1.0, 5.0
+    landmark_num = int(sys.argv[4])  # 選択するランドマークの数：100, 200
+    pop_num = int(sys.argv[5])  # 個体数（初期世代に含まれる経路の数）：100, 200
+    pop_length = int(sys.argv[6])  # 染色体長：10, 20, 30, 40, 50
+    #alpha, beta = 2, 5  # beta関数のパラメータ
 
-    # 距離減衰のパラメータとランドマークの数を設定
-    lbd = float(sys.argv[6])  # 距離減衰係数：0.05, 0.1, 0.5, 1.0, 5.0
-    landmark_num = int(sys.argv[7])-2  # 選択するランドマークの数：100, 200
-    pop_length = int(sys.argv[8])-2  # 染色体長：10, 20, 30, 40, 50
-    alpha, beta = 2, 5  # beta関数のパラメータ
-
-    # クラスタリングのパラメータを設定
+    # シミュレーション関連
+    generation_num = int(sys.argv[8])  # 世代数（進化の回数）：50, 100
+    generation_counter = 0  # 世代カウンタ    
     cluster_num = int(sys.argv[9])  # クラスタリングのクラスタ数
-
-    # 評価値の重みを設定
     pi = float(sys.argv[10])  # 適応度の混合比：0.0, 0.1, ..., 1.0
     evaluation_value_raito = (pi, 1-pi) # 距離比率と観光スポット評価の重み
 
@@ -590,9 +586,10 @@ if __name__ == "__main__":
     elite_select_num = 1  # エリート選択数
 
     # ウイルス感染のパラメータを設定
-    virus = sys.argv[3]  # bank
-    viral_distance = 500  # ウイルス感染の探索距離
+    virus = sys.argv[7]  # bank
+    lbd3 = 1.00  # 距離減衰係数lbd3（ウイルスの感染力）：0.05, 0.10, 0.50, 1.00, 5.00
     virus_length = 5  # ウイルス感染によって追加されるランドマークの数
+    viral_distance = 500  # ウイルス感染の探索距離
     virus_alpha = float(sys.argv[11])  # 免疫力の調整パラメータ：0.5, 1.0, 2.0
 
     # 交叉と突然変異の確率を設定
@@ -601,7 +598,7 @@ if __name__ == "__main__":
 
     dataset = f"from-to_{frmt:02d}_{virus}"
     volume = f"I{pop_num:03d}_T{generation_num:03d}"
-    params = f"LBD{int(lbd*100):03d}_L{landmark_num+2:03d}_ELL{pop_length+2:02d}_K{cluster_num:02d}_PI{int(pi*10):02d}_ALP{int(virus_alpha*10):02d}_GMM{crossover_prob}_MU{mutation_prob}"
+    params = f"L{landmark_num+2:03d}_LBD{int(lbd1*100):03d}_ELL{pop_length+2:02d}_K{cluster_num:02d}_PI{int(pi*10):02d}_ALP{int(virus_alpha*10):02d}_GMM{crossover_prob}_MU{mutation_prob}"
 
     # ログファイルのパスを設定し、開始ログを書き込む
     os.makedirs(f"work/{city}/{dataset}/{volume}/{params}/", exist_ok=True)
@@ -616,41 +613,31 @@ if __name__ == "__main__":
     wfo.write(f"volume: {volume}\n")
     wfo.write(f"params: {params}\n")
 
-    wfo.write("\n初期生成時のパラメータを設定\n")
-    wfo.write(f"{pop_num = }\n")
-    wfo.write(f"{generation_num = }\n")
-
-    wfo.write("\n距離減衰のパラメータとランドマークの数を設定\n")
-    wfo.write(f"lbd = {lbd}\n")
+    wfo.write("\nランドマークと初期個体関連\n")
+    wfo.write(f"{lbd1 = }\n")
     wfo.write(f"{landmark_num = }\n")
+    wfo.write(f"{pop_num = }\n")    
     wfo.write(f"{pop_length = }\n")
-    wfo.write(f"alpha, beta = {alpha, beta}\n")
+    #wfo.write(f"alpha, beta = {alpha, beta}\n")
 
-    wfo.write("\nクラスタリングのパラメータを設定\n")
+    wfo.write("\nシミュレーション関連\n")
+    wfo.write(f"{generation_num = }\n")
     wfo.write(f"{cluster_num = }\n")
-
-    wfo.write("\n評価値の重みを設定\n")
     wfo.write(f"{evaluation_value_raito = }\n")
-
-    wfo.write("\n選択のパラメータを設定\n")
     # wfo.write(f"tournament_size = {tournament_size}\n")
     wfo.write(f"{tournament_select_num = }\n")
     wfo.write(f"{elite_select_num = }\n")
-
-    wfo.write("\n交叉と突然変異の確率を設定\n")
     wfo.write(f"{crossover_prob = }\n")
     wfo.write(f"{mutation_prob = }\n")
-
-    wfo.write("\nウイルス感染のパラメータを設定\n")
     wfo.write(f"{viral_distance = }\n")
     wfo.write(f"{virus_length = }\n")
     wfo.write(f"{virus_alpha = }\n")
 
     geo_data_fp = f"data/{city}/road_network.graphml"
-    spot_dtf_fp = f"data/{city}/{virus}_spot_dtf.csv"
-    nodes_fp = f"data/{city}/nodes.csv"
-    landmark_dtf_fp = f"data/{city}/landmark_dtf.csv"
-    pop_dtf_fp = f"data/{city}/pop_dtf_{pop_length}.csv"
+    spot_dtf_fp = f"data/{city}/{virus}_frmt{frmt:02d}.csv"
+    nodes_fp = f"data/{city}/nodes_frmt{frmt:02d}_{virus}.csv"
+    landmark_dtf_fp = f"data/{city}/landmark_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_{virus}.csv"
+    pop_dtf_fp = f"data/{city}/pop_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_I{pop_num:03d}_ELL{pop_length:02d}.csv"
 
     # 保存したデータを読み込む
     G = ox.load_graphml(geo_data_fp)
@@ -678,7 +665,7 @@ if __name__ == "__main__":
     shortest_travel_time = path_gdf['travel_time'].sum()/ 60
     
     # 最短経路上にウイルススポットのノードがどのくらい存在するか
-    nearest_node = spot_dtf["nerest_node"].tolist()
+    nearest_node = spot_dtf["nearest_node"].tolist()
     shortest_include = len(set(shortest_path)&set(nearest_node))
 
     wfo.write("\n最短経路に関する情報\n")
@@ -693,8 +680,8 @@ if __name__ == "__main__":
     pop_dtf = evaluate(pop_dtf, spot_dtf, shortest_length, evaluation_value_raito, 'length', f"work/{city}/{dataset}/{volume}/{params}/gen{generation_counter:03d}.png")
 
     spot_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/spot.csv')  # 読み込みファイルと同じ情報量だが，順番がシャッフルされる可能性がある？ため，一応出力する．未検証
-    landmark_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/landmark_dtf_{generation_counter:03d}.csv')
-    pop_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/pop_dtf_{generation_counter:03d}.csv')
+    landmark_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/landmark_{generation_counter:03d}.csv')
+    pop_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/pop_{generation_counter:03d}.csv')
     # 世代ごとの進化処理
     for loop in range(generation_num):
         start_genaration = time.time()
@@ -735,7 +722,7 @@ if __name__ == "__main__":
                 pops_threshold[1] = threshold[0]
                 wfo.write(f"突然変異後：{pops_threshold[1]}\n")
 
-            next_pop, landmark_dtf = viral_infection(landmark_dtf, spot_dtf, nodes, pops_order[0], pop_length, virus_length, landmark_num, start, end, lbd, pops_threshold[0], virus_alpha)
+            next_pop, landmark_dtf = viral_infection(landmark_dtf, spot_dtf, nodes, pops_order[0], pop_length, virus_length, landmark_num, start, end, lbd3, pops_threshold[0], virus_alpha)
 
             # 新しい個体を次世代に追加
             next_pops_order.append(next_pop[0])
@@ -744,7 +731,7 @@ if __name__ == "__main__":
             if len(next_pops_order) >= pop_num - (elite_select_num * cluster_num):
                 break
 
-            next_pop, landmark_dtf = viral_infection(landmark_dtf, spot_dtf,nodes, pops_order[1], pop_length, virus_length, landmark_num, start, end, lbd, pops_threshold[1], virus_alpha)
+            next_pop, landmark_dtf = viral_infection(landmark_dtf, spot_dtf, nodes, pops_order[1], pop_length, virus_length, landmark_num, start, end, lbd3, pops_threshold[1], virus_alpha)
 
             # 新しい個体を次世代に追加
             next_pops_order.append(next_pop[0])
@@ -782,8 +769,8 @@ if __name__ == "__main__":
         wfo.write("evaluate start\n")
         pop_dtf = clustering(pop_dtf, nodes, cluster_num)
         pop_dtf = evaluate(pop_dtf, spot_dtf, shortest_length, evaluation_value_raito, 'length', f"work/{city}/{dataset}/{volume}/{params}/gen{generation_counter:03d}.png")
-        pop_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/pop_dtf_{generation_counter:03d}.csv')
-        landmark_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/landmark_dtf_{generation_counter:03d}.csv')
+        pop_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/pop_{generation_counter:03d}.csv')
+        landmark_dtf.to_csv(f'work/{city}/{dataset}/{volume}/{params}/landmark_{generation_counter:03d}.csv')
         end_genertion = time.time()
         wfo.write(f'{generation_counter:03d}世代目でかかった時間：{end_genertion - start_genaration}\n')
 

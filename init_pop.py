@@ -157,4 +157,4 @@ if __name__ == "__main__":
     end_node = ox.distance.nearest_nodes(G, end[1], end[0])
 
     pop_dtf = generator(G, landmark_dtf, pop_num, pop_length-2, end_node, alpha, beta)
-    pop_dtf.to_csv(f"data/{city}/pop_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_I{pop_num:03d}_ELL{pop_length:02d}.csv")
+    pop_dtf.to_csv(f"data/{city}/pop_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_{virus}_I{pop_num:03d}_ELL{pop_length:02d}.csv")

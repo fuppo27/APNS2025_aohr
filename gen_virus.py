@@ -88,9 +88,9 @@ def make_virus_nodes(G, spot_dtf, virus_length, viral_distance, lbd):
             if len(include_node) == 0:
                 break
         # ウイルスノードの追加
-        check_node_set.add(selected_nodes)
+        check_node_set.update(selected_nodes)
         # 選ばれたノードをウイルスノードリストに追加
-        selected_nodes += node
+        selected_nodes.append(node)
         virus_nodes.append(selected_nodes)
     
     return virus_nodes, spot_dtf
@@ -98,8 +98,8 @@ def make_virus_nodes(G, spot_dtf, virus_length, viral_distance, lbd):
 
 if __name__ == "__main__":
     city = sys.argv[1]  # 対象都市名：hachioji, yokohama
-    pref = sys.argv[2]  # 都道府県名
-    query = f"{city}shi, {pref}, Japan"  # "Hachiojishi, Tokyo, Japan"
+    pref = sys.argv[2]  # 都道府県名：tokyo, kanagawa
+    query = f"{city.capitalize()}, {pref.capitalize()}, Japan"  # "Hachioji, Tokyo, Japan"
     virus = sys.argv[3]  # ウイルス種類名：bank  
     virus_length = 5  # ウイルス感染によって追加されるランドマークの数
     viral_distance = 500  # ウイルス感染の探索距離
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     virus_nodes, spot_dtf = make_virus_nodes(G, spot_dtf, virus_length, viral_distance, lbd2)
     spot_dtf["virus_nodes"] = virus_nodes
     spot_dtf = spot_dtf.reset_index(drop=True)
-    spot_dtf.to_csv(f"data/{city}/{virus}_spot_dtf.csv")
+    spot_dtf.to_csv(f"data/{city}/{virus}.csv")
 
     nodes = spot_distance(nodes, spot_dtf)
     nodes = nodes[["osmid", "y", "x", "spot_distance"]]

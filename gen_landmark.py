@@ -104,4 +104,5 @@ if __name__ == "__main__":
     start_node = ox.distance.nearest_nodes(G, start[1], start[0])  # 指定された開始位置（start）に最も近いノードを探す
     start_row = nodes[nodes["osmid"] == start_node]  # 始点ノードのデータ行を取得
     landmark_dtf = choice_landmark(nodes, start_row, landmark_num-2, lbd1)  # ランドマークを選択する
-    landmark_dtf.to_csv(f"data/{city}/landmark_dtf_frmt{frmt:02d}_L{landmark_num:03d}_{int(lbd1*100):03d}.csv")
+    landmark_dtf = landmark_dtf.reset_index(drop=True)    
+    landmark_dtf.to_csv(f"data/{city}/landmark_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}.csv")

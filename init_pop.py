@@ -83,7 +83,7 @@ def generator(G, landmark_dtf, pop_num, pop_length, end_node, alpha, beta):
 
     Args:
         G (networkx.Graph): グラフオブジェクト（道路ネットワークなど）。
-        landmark_dtf (DataFrame): ランドマークの情報を含むデータフレーム。各ランドマーク間の距離やコストを含みます。
+        landmark_dtf (DataFrame): ランドマークの情報を含むデータフレーム。始点からの距離でソートされている必要がある。
         pop_num (int): 生成する経路の数。
         pop_length (int): 各経路に含めるランドマークの数。
         end_node (int): 経路の終点ノードID。
@@ -99,25 +99,25 @@ def generator(G, landmark_dtf, pop_num, pop_length, end_node, alpha, beta):
     pop_list = []
 
     # ランドマークのインデックスをリストで作成 (0からlandmark_dtfのサイズ-2まで)
-    landmark_index = [i for i in range(len(landmark_dtf) - 2)]
+    landmark_index = [i for i in range(len(landmark_dtf) - 2)]  # 100なら，0--97までの98要素
 
     for i in range(pop_num):
         pop_id = i + 1  # 経路のIDを設定
 
         # ランドマークの順序をランダムに並び替え
-        route_order = rnd.sample(landmark_index, pop_length)
+        route_order = rnd.sample(landmark_index, pop_length)  # 0--97
 
         # ランドマークインデックスを1から始まる番号に変換
-        route_order = [i + 1 for i in route_order]
+        route_order = [i + 1 for i in route_order]  # 1--98(0:始点／99:終点にするつもり)
 
         # 経路順序をソートして、スタート地点とゴール地点の順序を維持
         route_order.sort()
 
         # スタート地点（0）を追加
-        route_order.insert(0, 0)
+        route_order.insert(0, 0)  # 0:始点を挿入
 
         # ゴール地点（landmark_dtfのサイズ - 1）を追加
-        route_order.append(len(landmark_dtf) - 1)
+        route_order.append(len(landmark_dtf) - 1)  # 99:終点を挿入
 
         # 経路の情報を取得
         pop = pop_info(G, landmark_dtf, pop_length, route_order, end_node, alpha, beta)
@@ -140,20 +140,21 @@ if __name__ == "__main__":
     city = sys.argv[1]  # 対象都市名：hachioji, yokohama
     frmt = int(sys.argv[2])  # 出発点・到着点の緯度経度が書かれたファイル：from-to_01.txt
     start, end = [tuple(eval(row.rstrip())) for row in open(f"data/{city}/from-to_{frmt:02d}.txt")]  # 出発点と到着点の緯度経度を設定
-    pop_num = int(sys.argv[3])  # 生成したい個体数（100, 200）
-    landmark_num = int(sys.argv[4])-2  # ランドマーク数（100）
-    pop_length = int(sys.argv[5])-2  # 染色体の長さ（10, 20, 30, 40, 50）
-    lbd1 = float(sys.argv[6])  # 距離減衰係数lbd1（1.0）
+    lbd1 = float(sys.argv[3])  # 距離減衰係数lbd1（1.0）
+    landmark_num = int(sys.argv[4])  # ランドマーク数（100）
+    pop_num = int(sys.argv[5])  # 生成したい個体数（100, 200）
+    pop_length = int(sys.argv[6])  # 染色体の長さ（10, 20, 30, 40, 50）
     alpha, beta = 2, 5  # beta関数のパラメータ
-
+    virus = sys.argv[7]  # ウイルス種類名：bank
+    
     geo_data_fp = f"data/{city}/road_network.graphml"
     G = ox.load_graphml(geo_data_fp)
-    landmark_dtf_fp = f"data/{city}/landmark_dtf_frmt{frmt:02d}_L{landmark_num:03d}_{int(lbd1*100):03d}.csv"    
+    landmark_dtf_fp = f"data/{city}/landmark_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_{virus}.csv"    
     landmark_dtf = pd.read_csv(landmark_dtf_fp, index_col=0, converters={'spot_distance': str_to_list})
     # 指定された開始位置（start）に最も近いノードを探す
     start_node = ox.distance.nearest_nodes(G, start[1], start[0])
     # 終了位置（end）に最も近いノードを探す
     end_node = ox.distance.nearest_nodes(G, end[1], end[0])
 
-    pop_dtf = generator(G, landmark_dtf, pop_num, pop_length, end_node, alpha, beta)
-    pop_dtf.to_csv(f"data/{city}/pop_dtf_frmt{frmt:02d}_I{pop_num:03d}_L{landmark_num:03d}_ELL{pop_length:02d}_{int(lbd1*100):03d}.csv")
+    pop_dtf = generator(G, landmark_dtf, pop_num, pop_length-2, end_node, alpha, beta)
+    pop_dtf.to_csv(f"data/{city}/pop_frmt{frmt:02d}_L{landmark_num:03d}_LBD{int(lbd1*100):03d}_I{pop_num:03d}_ELL{pop_length:02d}.csv")
